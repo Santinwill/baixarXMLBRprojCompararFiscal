@@ -1,0 +1,33 @@
+# Variáveis sensíveis
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Ambientes virtuais
+venv/
+.venv/
+
+# Logs
+logs/
+*.log
+
+# Downloads
+downloads/
+
+# XMLs
+xmls/
+
+# Banco de dados
+database/
+*.db
+*.sqlite3
+
+# VS Code
+.vscode/
+
+# Sistema operacional
+.DS_Store
+Thumbs

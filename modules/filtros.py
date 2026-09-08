@@ -7,6 +7,5 @@ def configurar_filtros(page: Page):
     page.check('input[name="checktransf"]')
     page.fill("#destincnpj", "")
     page.click('input[name="semana"]')
-
     page.wait_for_load_state("networkidle")
     print("Filtros configurados")

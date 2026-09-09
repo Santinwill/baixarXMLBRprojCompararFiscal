@@ -3,10 +3,7 @@ from playwright.sync_api import Page
 
 DOWNLOADS_DIR = Path("downloads")
 
-DOWNLOADS_DIR.mkdir(
-    parents=True,
-    exist_ok=True
-)
+DOWNLOADS_DIR.mkdir(parents=True,exist_ok=True)
 
 def selecionar_todos(page: Page):
     print("Selecionando checkbox TODOS...")

@@ -7,6 +7,9 @@ from modules.download import (selecionar_todos,exportar_selecao)
 from modules.extractor import processar_arquivo
 from modules.logger import logger
 from modules.statistics import Statistics
+from modules.nfe_parser import processar_pasta_xmls
+from modules.fiscal_mapper import mapear_documentos
+from modules.excel_exporter import gerar_excel
 from datetime import datetime
 
 def main():
@@ -51,6 +54,58 @@ def main():
                         break
                 print("Todas as páginas foram processadas")
                 logger.info("Todas as páginas foram processadas")
+                print(
+                    "Iniciando geração da planilha fiscal..."
+                )
+
+                logger.info(
+                    "Iniciando geração da planilha fiscal..."
+                )
+
+                documentos = processar_pasta_xmls(
+                    "xmls"
+                )
+
+                logger.info(
+                    f"NF-es processadas: "
+                    f"{len(documentos)}"
+                )
+
+                registros = mapear_documentos(
+                    documentos
+                )
+
+                logger.info(
+                    f"Registros fiscais gerados: "
+                    f"{len(registros)}"
+                )
+
+                if registros:
+
+                    arquivo_excel = gerar_excel(
+                        registros
+                    )
+
+                    mensagem_excel = (
+                        f"Excel gerado: "
+                        f"{arquivo_excel}"
+                    )
+
+                    print(mensagem_excel)
+
+                    logger.info(
+                        mensagem_excel
+                    )
+
+                else:
+
+                    logger.warning(
+                        "Nenhum registro fiscal encontrado."
+                    )
+
+                    print(
+                        "Nenhum registro fiscal encontrado."
+                    )
             finally:
                 if browser is not None:
                     try:

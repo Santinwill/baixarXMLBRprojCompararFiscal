@@ -20,6 +20,9 @@ downloads/
 # XMLs
 xmls/
 
+# OUTPUTs
+outputs/
+
 # Banco de dados
 database/
 *.db

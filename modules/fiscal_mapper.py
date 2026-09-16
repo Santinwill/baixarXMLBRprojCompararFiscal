@@ -1,4 +1,4 @@
-def mapear_documento(documento):
+def mapear_nfe(documento):
     """
     Converte uma NF-e em registros fiscais.
 
@@ -304,28 +304,242 @@ def mapear_documento(documento):
 
 
 def mapear_documentos(documentos):
-    """
-    Converte várias NF-es em uma lista única
-    de registros fiscais.
-    """
 
     registros = []
 
     for documento in documentos:
 
-        registros.extend(
-            mapear_documento(documento)
+        tipo = documento.get(
+            "tipo_documento",
+            ""
         )
 
+        if tipo == "NFe":
+
+            registros.extend(
+                mapear_nfe(documento)
+            )
+
+        elif tipo == "CTe":
+
+            registros.extend(
+                mapear_cte(documento)
+            )
+
     return registros
+
+
+def mapear_cte(documento):
+    """
+    Converte um CT-e em uma linha fiscal.
+    """
+
+    registro = {
+
+        "arquivo": documento["arquivo"],
+        "tipo_documento": "CTe",
+
+        "chave": documento["chave"],
+        "modelo": documento["modelo"],
+
+        "numero_nf": documento["numero_cte"],
+        "serie": documento["serie"],
+
+        "data_emissao": documento["data_emissao"],
+        "data_saida_entrada": "",
+
+        "natureza_operacao":
+            documento["natureza_operacao"],
+
+        "tipo_operacao":
+            documento["tipo_servico"],
+
+        "finalidade_emissao":
+            documento["tipo_cte"],
+
+        "cnpj_emitente":
+            documento["cnpj_cpf_emitente"],
+
+        "razao_emitente":
+            documento["razao_emitente"],
+
+        "cidade_emitente":
+            documento["cidade_emitente"],
+
+        "uf_emitente":
+            documento["uf_emitente"],
+
+        "ie_emitente":
+            documento["ie_emitente"],
+
+        "cnpj_destinatario":
+            documento["cnpj_cpf_destinatario"],
+
+        "razao_destinatario":
+            documento["razao_destinatario"],
+
+        "cidade_destinatario":
+            documento["cidade_destinatario"],
+
+        "uf_destinatario":
+            documento["uf_destinatario"],
+
+        "ie_destinatario":
+            documento["ie_destinatario"],
+
+        "base_icms_total":
+            documento["base_icms"],
+
+        "valor_icms_total":
+            documento["valor_icms"],
+
+        "valor_produtos_total":
+            documento["valor_total_prestacao"],
+
+        "valor_frete_total":
+            documento["valor_total_prestacao"],
+
+        "valor_seguro_total": "",
+        "valor_desconto_total": "",
+
+        "valor_ipi_total": "",
+        "valor_pis_total": "",
+        "valor_cofins_total": "",
+
+        "valor_total_nf":
+            documento["valor_total_prestacao"],
+
+        "valor_pis_retido": "",
+        "valor_cofins_retido": "",
+        "valor_csll_retido": "",
+        "valor_irrf_retido": "",
+        "valor_inss_retido": "",
+
+        "informacoes_complementares":
+            documento["observacoes"],
+
+        "informacoes_fisco": "",
+
+        "n_item": "1",
+
+        "codigo_produto": "",
+
+        "descricao_produto":
+            "SERVICO DE TRANSPORTE",
+
+        "ean": "",
+        "ean_tributavel": "",
+
+        "ncm": "",
+        "cest": "",
+
+        "cfop":
+            documento["cfop"],
+
+        "unidade": "UN",
+
+        "quantidade": "1",
+
+        "valor_unitario":
+            documento["valor_total_prestacao"],
+
+        "valor_item":
+            documento["valor_total_prestacao"],
+
+        "valor_frete_item": "",
+        "valor_seguro_item": "",
+        "valor_desconto_item": "",
+        "valor_outros_item": "",
+
+        "origem_icms": "",
+
+        "cst_icms":
+            documento["cst_icms"],
+
+        "modalidade_bc_icms": "",
+
+        "base_icms":
+            documento["base_icms"],
+
+        "aliquota_icms":
+            documento["aliquota_icms"],
+
+        "valor_icms":
+            documento["valor_icms"],
+
+        "base_icms_st": "",
+        "valor_icms_st": "",
+        "valor_icms_desonerado": "",
+
+        "valor_fcp":
+            documento["valor_fcp_uf_fim"],
+
+        "valor_fcp_st": "",
+
+        "valor_icms_uf_destino":
+            documento["valor_icms_uf_fim"],
+
+        "valor_icms_uf_remetente":
+            documento["valor_icms_uf_inicio"],
+
+        "cst_pis":
+            documento["cst_ibscbs"],
+
+        "base_pis":
+            documento["base_ibscbs"],
+
+        "aliquota_pis":
+            documento["aliquota_cbs"],
+
+        "valor_pis":
+            documento["valor_cbs"],
+
+        "cst_cofins":
+            documento["cst_ibscbs"],
+
+        "base_cofins":
+            documento["base_ibscbs"],
+
+        "aliquota_cofins":
+            documento["aliquota_cbs"],
+
+        "valor_cofins":
+            documento["valor_cbs"],
+
+        "cst_ipi": "",
+        "base_ipi": "",
+        "aliquota_ipi": "",
+        "valor_ipi": "",
+
+        "base_issqn": "",
+        "aliquota_issqn": "",
+        "valor_issqn": "",
+
+        "indicador_total": "1",
+
+        "pedido_compra": "",
+        "item_pedido_compra": "",
+
+        "informacao_adicional_item":
+            documento["produto_predominante"],
+    }
+
+    return [registro]
 
 
 if __name__ == "__main__":
 
     from nfe_parser import processar_pasta_xmls
+    from cte_parser import processar_pasta_ctes
 
-    documentos = processar_pasta_xmls(
-        "xmls"
+    documentos = []
+
+    documentos.extend(
+        processar_pasta_xmls("xmls")
+    )
+
+    documentos.extend(
+        processar_pasta_ctes("xmls")
     )
 
     registros = mapear_documentos(

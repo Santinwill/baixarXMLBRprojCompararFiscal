@@ -17,7 +17,6 @@ def obter_total_paginas(page: Page):
 def ir_para_proxima_pagina(page: Page):
     links = page.locator('a[href*="pagina="]')
     if links.count() == 0:
-        raise Excepti*n("Botão de próxima página não enc*ntrado.")
+        raise Exception("Botão de próxima página não encontrado.")
     links.first.click()
     page.wait_for_load_state("networkidle")
-    print("Próxima pági*a carregada")

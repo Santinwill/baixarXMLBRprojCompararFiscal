@@ -29,7 +29,6 @@ def extrair_zip(caminho_zip):
                 continue
             zip_file.extract(nome_arquivo,XML_DIR)
             novos += 1
-            print(f"XML extraído: {destino.name}")
     print(f"{novos} novo(s) XML(s) extraído(s)")
     return {"novos": novos,"duplicados": duplicados}
 

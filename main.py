@@ -8,6 +8,7 @@ from modules.extractor import processar_arquivo
 from modules.logger import logger
 from modules.statistics import Statistics
 from modules.nfe_parser import processar_pasta_xmls
+from modules.cte_parser import processar_pasta_ctes
 from modules.fiscal_mapper import mapear_documentos
 from modules.excel_exporter import gerar_excel
 from datetime import datetime
@@ -54,58 +55,22 @@ def main():
                         break
                 print("Todas as páginas foram processadas")
                 logger.info("Todas as páginas foram processadas")
-                print(
-                    "Iniciando geração da planilha fiscal..."
-                )
-
-                logger.info(
-                    "Iniciando geração da planilha fiscal..."
-                )
-
-                documentos = processar_pasta_xmls(
-                    "xmls"
-                )
-
-                logger.info(
-                    f"NF-es processadas: "
-                    f"{len(documentos)}"
-                )
-
-                registros = mapear_documentos(
-                    documentos
-                )
-
-                logger.info(
-                    f"Registros fiscais gerados: "
-                    f"{len(registros)}"
-                )
-
+                print("Iniciando geração da planilha fiscal...")
+                logger.info("Iniciando geração da planilha fiscal...")
+                documentos = []
+                documentos.extend(processar_pasta_xmls("xmls"))
+                documentos.extend(processar_pasta_ctes("xmls"))
+                logger.info(f"NF e CTe processados: {len(documentos)}")
+                print(f"NF-es encontradas: {len(processar_pasta_xmls('xmls'))}")
+                print(f"CT-es encontrados: {len(processar_pasta_ctes('xmls'))}")
+                registros = mapear_documentos(documentos)
+                logger.info(f"Registros fiscais gerados: {len(registros)}")
                 if registros:
-
-                    arquivo_excel = gerar_excel(
-                        registros
-                    )
-
-                    mensagem_excel = (
-                        f"Excel gerado: "
-                        f"{arquivo_excel}"
-                    )
-
-                    print(mensagem_excel)
-
-                    logger.info(
-                        mensagem_excel
-                    )
-
+                    arquivo_excel = gerar_excel(registros)
+                    mensagem_excel = (f"Excel gerado: {arquivo_excel}")
+                    logger.info(mensagem_excel)
                 else:
-
-                    logger.warning(
-                        "Nenhum registro fiscal encontrado."
-                    )
-
-                    print(
-                        "Nenhum registro fiscal encontrado."
-                    )
+                    logger.warning("Nenhum registro fiscal encontrado.")
             finally:
                 if browser is not None:
                     try:
@@ -126,7 +91,7 @@ def main():
         resumo = stats.resumo()
         print(resumo)
         logger.info(resumo)
-        logger.info("Processo BRProj encerrado")
+        logger.info("Processo BRProj encerrado\n\n")
 
 if __name__ == "__main__":
     main()

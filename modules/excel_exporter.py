@@ -1,7 +1,6 @@
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
-
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
@@ -10,8 +9,6 @@ from openpyxl.utils import get_column_letter
 OUTPUT_DIR = Path("outputs")
 SHEET_NAME = "Export"
 
-# Ordem e nomes reproduzem o layout de Entradas 14-09.xlsx.
-# TIPO_ESPECIE aparece duas vezes no arquivo de referencia e foi preservado.
 COLUNAS = [
     ("CD_UNI_NEG", None),
     ("NF", "numero_nf"),
@@ -131,7 +128,7 @@ LARGURAS = {
 
 
 def para_decimal(valor):
-    """Converte texto numerico do XML em Decimal, sem inventar zero."""
+    """Converte texto numerico do XML em Decimal."""
     if valor is None:
         return None
 
@@ -202,11 +199,7 @@ def criar_cabecalho(planilha):
         celula = planilha.cell(row=1, column=coluna, value=titulo)
         celula.font = Font(bold=True, color="FFFFFF")
         celula.fill = PatternFill(fill_type="solid", fgColor="1F4E78")
-        celula.alignment = Alignment(
-            horizontal="center",
-            vertical="center",
-            wrap_text=True,
-        )
+        celula.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True,)
 
     planilha.row_dimensions[1].height = 32
 
@@ -241,7 +234,6 @@ def ajustar_colunas(planilha):
 def gerar_excel(registros, output_dir=OUTPUT_DIR):
     """
     Gera um novo arquivo Excel por execucao.
-
     Os campos exclusivos do CIGAM permanecem vazios quando nao ha
     origem no XML ou no registro fiscal. O arquivo nao inventa codigos.
     """
@@ -271,20 +263,3 @@ def gerar_excel(registros, output_dir=OUTPUT_DIR):
 
     workbook.save(caminho_arquivo)
     return caminho_arquivo
-
-
-if __name__ == "__main__":
-    from nfe_parser import processar_pasta_xmls
-    from fiscal_mapper import mapear_documentos
-
-    documentos = processar_pasta_xmls("xmls")
-    registros = mapear_documentos(documentos)
-
-    print(f"Documentos: {len(documentos)}")
-    print(f"Registros: {len(registros)}")
-
-    if registros:
-        arquivo = gerar_excel(registros)
-        print(f"Excel gerado: {arquivo}")
-    else:
-        print("Nenhum registro fiscal encontrado. Excel nao gerado.")

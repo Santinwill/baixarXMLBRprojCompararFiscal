@@ -1,7 +1,22 @@
+def obter_cd_uni_neg(cnpj):
+    if not cnpj:
+        return ""
+    numeros = "".join(
+        c for c in str(cnpj)
+        if c.isdigit()
+    )
+    if len(numeros) != 14:
+        return ""
+    estabelecimento = numeros[8:12]
+    return estabelecimento[-3:]
+
 def mapear_nfe(documento):
     registros = []
     for item in documento["itens"]:
         registro = {
+            "cd_uni_neg":
+                obter_cd_uni_neg(documento["cnpj_destinatario"]),
+
             "arquivo": documento["arquivo"],
             "tipo_documento": documento["tipo_documento"],
 
@@ -241,6 +256,9 @@ def mapear_nfe(documento):
 
 def mapear_nfse(documento):
     registro = {
+        "cd_uni_neg":
+            obter_cd_uni_neg(documento["cnpj_destinatario"]),
+
         "arquivo":
             documento["arquivo"],
 
@@ -519,6 +537,9 @@ def mapear_documentos(documentos):
 
 def mapear_cte(documento):
     registro = {
+        "cd_uni_neg":
+            obter_cd_uni_neg(documento["cnpj_cpf_destinatario"]),
+
         "arquivo": documento["arquivo"],
         "tipo_documento": "CTe",
 

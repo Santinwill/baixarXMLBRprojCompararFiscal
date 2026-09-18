@@ -20,6 +20,8 @@ def processar_consulta(page, stats):
     while pagina_atual <= total_paginas:
         mensagem = (f"Processando página {pagina_atual} de {total_paginas}")
         print(mensagem)
+        print(page.title())
+        print(page.url)
         selecionar_todos(page)
         arquivo_salvo = exportar_selecao(page,pagina_atual)
         resultado = processar_arquivo(arquivo_salvo)
@@ -41,13 +43,14 @@ def main():
         with sync_playwright() as p:
             browser = None
             try:
-                browser = p.chromium.launch(headless=False)
+                browser = p.chromium.launch(headless=True)
                 page = browser.new_page(accept_downloads=True)
                 fazer_login(page,USUARIO,SENHA)
                 logger.info("Login realizado com sucesso")
                 print("Processando NFe e CTe")
                 configurar_filtros(page,"documentos")
                 processar_consulta(page,stats)
+                page.wait_for_load_state("networkidle")
                 configurar_filtros(page,"nfse")
                 processar_consulta(page,stats)
                 print("Todas as páginas foram processadas")

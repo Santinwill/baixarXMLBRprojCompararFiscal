@@ -10,9 +10,10 @@ OUTPUT_DIR = Path("outputs")
 SHEET_NAME = "Export"
 
 COLUNAS = [
-    ("CD_UNI_NEG", None),
+    ("CD_UNI_NEG", "cd_uni_neg"),
     ("NF", "numero_nf"),
-    ("MODELO_FORMULARIO", "modelo"),
+    ("TIPO_DOCUMENTO", "tipo_documento"),
+    ("CHAVE", "chave"),
     ("DATA_EMISSAO", "data_emissao"),
     ("DATA_ENTRADA", None),
     ("CNPJ_CPF", "cnpj_emitente"),
@@ -65,6 +66,7 @@ COLUNAS = [
 CAMPOS_TEXTO = {
     "numero_nf",
     "modelo",
+    "chave",
     "cnpj_emitente",
     "razao_emitente",
     "uf_emitente",
@@ -106,6 +108,7 @@ LARGURAS = {
     "CD_UNI_NEG": 13,
     "NF": 13,
     "MODELO_FORMULARIO": 18,
+    "CHAVE": 52,
     "DATA_EMISSAO": 20,
     "DATA_ENTRADA": 16,
     "CNPJ_CPF": 20,

@@ -1,20 +1,7 @@
 def mapear_nfe(documento):
-    """
-    Converte uma NF-e em registros fiscais.
-
-    Cada item da NF gera um registro.
-    """
-
     registros = []
-
     for item in documento["itens"]:
-
         registro = {
-
-            # =====================
-            # DOCUMENTO
-            # =====================
-
             "arquivo": documento["arquivo"],
             "tipo_documento": documento["tipo_documento"],
 
@@ -31,10 +18,6 @@ def mapear_nfe(documento):
             "tipo_operacao": documento["tipo_operacao"],
             "finalidade_emissao": documento["finalidade_emissao"],
 
-            # =====================
-            # EMITENTE
-            # =====================
-
             "cnpj_emitente": documento["cnpj_emitente"],
             "razao_emitente": documento["razao_emitente"],
 
@@ -43,10 +26,6 @@ def mapear_nfe(documento):
 
             "ie_emitente":
                 documento["inscricao_estadual_emitente"],
-
-            # =====================
-            # DESTINATARIO
-            # =====================
 
             "cnpj_destinatario":
                 documento["cnpj_destinatario"],
@@ -62,10 +41,6 @@ def mapear_nfe(documento):
 
             "ie_destinatario":
                 documento["inscricao_estadual_destinatario"],
-
-            # =====================
-            # TOTAIS DA NF
-            # =====================
 
             "base_icms_total":
                 documento["base_icms_total"],
@@ -97,10 +72,6 @@ def mapear_nfe(documento):
             "valor_total_nf":
                 documento["valor_total_nf"],
 
-            # =====================
-            # RETENCOES
-            # =====================
-
             "valor_pis_retido":
                 documento["valor_pis_retido"],
 
@@ -116,19 +87,11 @@ def mapear_nfe(documento):
             "valor_inss_retido":
                 documento["valor_inss_retido"],
 
-            # =====================
-            # INFORMAÇÕES
-            # =====================
-
             "informacoes_complementares":
                 documento["informacoes_complementares"],
 
             "informacoes_fisco":
                 documento["informacoes_fisco"],
-
-            # =====================
-            # ITEM
-            # =====================
 
             "n_item": item["n_item"],
 
@@ -177,10 +140,6 @@ def mapear_nfe(documento):
             "valor_outros_item":
                 item["valor_outros"],
 
-            # =====================
-            # ICMS
-            # =====================
-
             "origem_icms":
                 item["origem_icms"],
 
@@ -220,10 +179,6 @@ def mapear_nfe(documento):
             "valor_icms_uf_remetente":
                 item["valor_icms_uf_remetente"],
 
-            # =====================
-            # PIS
-            # =====================
-
             "cst_pis":
                 item["cst_pis"],
 
@@ -235,10 +190,6 @@ def mapear_nfe(documento):
 
             "valor_pis":
                 item["valor_pis"],
-
-            # =====================
-            # COFINS
-            # =====================
 
             "cst_cofins":
                 item["cst_cofins"],
@@ -252,10 +203,6 @@ def mapear_nfe(documento):
             "valor_cofins":
                 item["valor_cofins"],
 
-            # =====================
-            # IPI
-            # =====================
-
             "cst_ipi":
                 item["cst_ipi"],
 
@@ -268,10 +215,6 @@ def mapear_nfe(documento):
             "valor_ipi":
                 item["valor_ipi"],
 
-            # =====================
-            # ISSQN
-            # =====================
-
             "base_issqn":
                 item["base_issqn"],
 
@@ -280,10 +223,6 @@ def mapear_nfe(documento):
 
             "valor_issqn":
                 item["valor_issqn"],
-
-            # =====================
-            # AUXILIARES
-            # =====================
 
             "indicador_total":
                 item["indicador_total"],
@@ -297,45 +236,289 @@ def mapear_nfe(documento):
             "informacao_adicional_item":
                 item["informacao_adicional_item"],
         }
-
         registros.append(registro)
-
     return registros
 
+def mapear_nfse(documento):
+    registro = {
+        "arquivo":
+            documento["arquivo"],
+
+        "tipo_documento":
+            "NFSe",
+
+        "chave":
+            documento["chave"],
+
+        "modelo":
+            documento["modelo"],
+
+        "numero_nf":
+            documento["numero_nf"],
+
+        "serie":
+            documento["serie"],
+
+        "data_emissao":
+            documento["data_emissao"],
+
+        "data_saida_entrada":
+            documento["data_competencia"],
+
+        "natureza_operacao":
+            "SERVICO",
+
+        "tipo_operacao":
+            "SERVICO",
+
+        "finalidade_emissao":
+            "",
+
+        "cnpj_emitente":
+            documento["cnpj_emitente"],
+
+        "razao_emitente":
+            documento["razao_emitente"],
+
+        "cidade_emitente":
+            documento["cidade_emitente"],
+
+        "uf_emitente":
+            documento["uf_emitente"],
+
+        "ie_emitente":
+            "",
+
+        "cnpj_destinatario":
+            documento["cnpj_destinatario"],
+
+        "razao_destinatario":
+            documento["razao_destinatario"],
+
+        "cidade_destinatario":
+            documento["cidade_destinatario"],
+
+        "uf_destinatario":
+            documento.get(
+                "uf_destinatario",
+                ""
+            ),
+
+        "ie_destinatario":
+            "",
+
+        "base_icms_total":
+            "",
+
+        "valor_icms_total":
+            "",
+
+        "valor_produtos_total":
+            documento["valor_servico"],
+
+        "valor_frete_total":
+            "",
+
+        "valor_seguro_total":
+            "",
+
+        "valor_desconto_total":
+            "",
+
+        "valor_ipi_total":
+            "",
+
+        "valor_pis_total":
+            "",
+
+        "valor_cofins_total":
+            "",
+
+        "valor_total_nf":
+            documento["valor_total_nf"],
+
+        "valor_pis_retido":
+            "",
+
+        "valor_cofins_retido":
+            "",
+
+        "valor_csll_retido":
+            "",
+
+        "valor_irrf_retido":
+            "",
+
+        "valor_inss_retido":
+            "",
+
+        "informacoes_complementares":
+            documento["observacoes"],
+
+        "informacoes_fisco":
+            "",
+
+        "n_item":
+            "1",
+
+        "codigo_produto":
+            documento["codigo_servico"],
+
+        "descricao_produto":
+            documento["descricao_servico"],
+
+        "ean":
+            "",
+
+        "ean_tributavel":
+            "",
+
+        "ncm":
+            "",
+
+        "cest":
+            "",
+
+        "cfop":
+            "",
+
+        "unidade":
+            "UN",
+
+        "quantidade":
+            "1",
+
+        "valor_unitario":
+            documento["valor_servico"],
+
+        "valor_item":
+            documento["valor_servico"],
+
+        "valor_frete_item":
+            "",
+
+        "valor_seguro_item":
+            "",
+
+        "valor_desconto_item":
+            "",
+
+        "valor_outros_item":
+            "",
+
+        "origem_icms":
+            "",
+
+        "cst_icms":
+            "",
+
+        "modalidade_bc_icms":
+            "",
+
+        "base_icms":
+            "",
+
+        "aliquota_icms":
+            "",
+
+        "valor_icms":
+            "",
+
+        "base_icms_st":
+            "",
+
+        "valor_icms_st":
+            "",
+
+        "valor_icms_desonerado":
+            "",
+
+        "valor_fcp":
+            "",
+
+        "valor_fcp_st":
+            "",
+
+        "valor_icms_uf_destino":
+            "",
+
+        "valor_icms_uf_remetente":
+            "",
+
+        "cst_pis":
+            "",
+
+        "base_pis":
+            "",
+
+        "aliquota_pis":
+            "",
+
+        "valor_pis":
+            "",
+
+        "cst_cofins":
+            "",
+
+        "base_cofins":
+            "",
+
+        "aliquota_cofins":
+            "",
+
+        "valor_cofins":
+            "",
+
+        "cst_ipi":
+            "",
+
+        "base_ipi":
+            "",
+
+        "aliquota_ipi":
+            "",
+
+        "valor_ipi":
+            "",
+
+        "base_issqn":
+            documento["valor_servico"],
+
+        "aliquota_issqn":
+            "",
+
+        "valor_issqn":
+            "",
+
+        "indicador_total":
+            "1",
+
+        "pedido_compra":
+            "",
+
+        "item_pedido_compra":
+            "",
+
+        "informacao_adicional_item":
+            documento["descricao_servico"],
+    }
+    return [registro]
 
 def mapear_documentos(documentos):
-
     registros = []
-
     for documento in documentos:
-
-        tipo = documento.get(
-            "tipo_documento",
-            ""
-        )
-
+        tipo = documento.get("tipo_documento","")
         if tipo == "NFe":
-
-            registros.extend(
-                mapear_nfe(documento)
-            )
-
+            registros.extend(mapear_nfe(documento))
         elif tipo == "CTe":
-
-            registros.extend(
-                mapear_cte(documento)
-            )
-
+            registros.extend(mapear_cte(documento))
+        elif tipo == "NFSe":
+            registros.extend(mapear_nfse(documento))
     return registros
 
 
 def mapear_cte(documento):
-    """
-    Converte um CT-e em uma linha fiscal.
-    """
-
     registro = {
-
         "arquivo": documento["arquivo"],
         "tipo_documento": "CTe",
 
@@ -523,43 +706,4 @@ def mapear_cte(documento):
         "informacao_adicional_item":
             documento["produto_predominante"],
     }
-
-    return [registro]
-
-
-if __name__ == "__main__":
-
-    from nfe_parser import processar_pasta_xmls
-    from cte_parser import processar_pasta_ctes
-
-    documentos = []
-
-    documentos.extend(
-        processar_pasta_xmls("xmls")
-    )
-
-    documentos.extend(
-        processar_pasta_ctes("xmls")
-    )
-
-    registros = mapear_documentos(
-        documentos
-    )
-
-    print(
-        f"Documentos: {len(documentos)}"
-    )
-
-    print(
-        f"Registros: {len(registros)}"
-    )
-
-    if registros:
-
-        print(
-            "\nPrimeiro registro:"
-        )
-
-        print(
-            registros[0]
-        )           
+    return [registro]      

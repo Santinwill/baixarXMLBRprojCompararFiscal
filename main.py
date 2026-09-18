@@ -9,9 +9,27 @@ from modules.logger import logger
 from modules.statistics import Statistics
 from modules.nfe_parser import processar_pasta_xmls
 from modules.cte_parser import processar_pasta_ctes
+from modules.nfse_parser import processar_pasta_nfses
 from modules.fiscal_mapper import mapear_documentos
 from modules.excel_exporter import gerar_excel
 from datetime import datetime
+
+
+def processar_consulta(page, stats):
+    pagina_atual, total_paginas = obter_total_paginas(page)
+    while pagina_atual <= total_paginas:
+        mensagem = (f"Processando página {pagina_atual} de {total_paginas}")
+        print(mensagem)
+        selecionar_todos(page)
+        arquivo_salvo = exportar_selecao(page,pagina_atual)
+        resultado = processar_arquivo(arquivo_salvo)
+        stats.xmls_novos += resultado["novos"]
+        stats.xmls_duplicados += resultado["duplicados"]
+        if pagina_atual < total_paginas:
+            ir_para_proxima_pagina(page)
+            pagina_atual, total_paginas = (obter_total_paginas(page))
+        else:
+            break
 
 def main():
     stats = Statistics()
@@ -23,36 +41,15 @@ def main():
         with sync_playwright() as p:
             browser = None
             try:
-                browser = p.chromium.launch(headless=True)
+                browser = p.chromium.launch(headless=False)
                 page = browser.new_page(accept_downloads=True)
                 fazer_login(page,USUARIO,SENHA)
                 logger.info("Login realizado com sucesso")
-                configurar_filtros(page)
-                logger.info("Filtros configurados com sucesso")
-                pagina_atual, total_paginas = (obter_total_paginas(page))
-                while pagina_atual <= total_paginas:
-                    mensagem_pagina = (f"Processando página "f"{pagina_atual} de "f"{total_paginas}")
-                    print(mensagem_pagina)
-                    logger.info(mensagem_pagina)
-                    stats.paginas_processadas += 1
-                    selecionar_todos(page)
-                    arquivo_salvo = exportar_selecao(page,pagina_atual)
-                    stats.downloads_realizados += 1
-                    logger.info(f"Arquivo salvo: "f"{arquivo_salvo}")
-                    resultado = processar_arquivo(arquivo_salvo)
-                    stats.xmls_novos += (resultado["novos"])
-                    stats.xmls_duplicados += (resultado["duplicados"])
-                    mensagem_novos = (f"XMLs novos na página "f"{pagina_atual}: "f"{resultado['novos']}")
-                    mensagem_duplicados = (f"XMLs duplicados na página "f"{pagina_atual}: "f"{resultado['duplicados']}")
-                    print(mensagem_novos)
-                    print(mensagem_duplicados)
-                    logger.info(mensagem_novos)
-                    logger.info(mensagem_duplicados)
-                    if pagina_atual < total_paginas:
-                        ir_para_proxima_pagina(page)
-                        pagina_atual, total_paginas = (obter_total_paginas(page))
-                    else:
-                        break
+                print("Processando NFe e CTe")
+                configurar_filtros(page,"documentos")
+                processar_consulta(page,stats)
+                configurar_filtros(page,"nfse")
+                processar_consulta(page,stats)
                 print("Todas as páginas foram processadas")
                 logger.info("Todas as páginas foram processadas")
                 print("Iniciando geração da planilha fiscal...")
@@ -60,10 +57,14 @@ def main():
                 documentos = []
                 documentos.extend(processar_pasta_xmls("xmls"))
                 documentos.extend(processar_pasta_ctes("xmls"))
+                documentos.extend(processar_pasta_nfses("xmls"))
                 logger.info(f"NF e CTe processados: {len(documentos)}")
                 print(f"NF-es encontradas: {len(processar_pasta_xmls('xmls'))}")
                 print(f"CT-es encontrados: {len(processar_pasta_ctes('xmls'))}")
+                print(f"NFse encontrados: {len(processar_pasta_nfses('xmls'))}")
                 registros = mapear_documentos(documentos)
+                print(f"Documentos totais: {len(documentos)}")
+                print(f"Registros encontrados: {len(registros)}")
                 logger.info(f"Registros fiscais gerados: {len(registros)}")
                 if registros:
                     arquivo_excel = gerar_excel(registros)

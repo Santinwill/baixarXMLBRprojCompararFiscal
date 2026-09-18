@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
@@ -14,6 +14,7 @@ COLUNAS = [
     ("NF", "numero_nf"),
     ("TIPO_DOCUMENTO", "tipo_documento"),
     ("CHAVE", "chave"),
+    ("CHAVE_ITEM", "chave_item"),
     ("DATA_EMISSAO", "data_emissao"),
     ("DATA_ENTRADA", None),
     ("CNPJ_CPF", "cnpj_emitente"),
@@ -64,9 +65,12 @@ COLUNAS = [
 ]
 
 CAMPOS_TEXTO = {
+    "cd_uni_neg",
+    "tipo_documento",
     "numero_nf",
     "modelo",
     "chave",
+    "chave_item",
     "cnpj_emitente",
     "razao_emitente",
     "uf_emitente",
@@ -106,9 +110,11 @@ CAMPOS_MONETARIOS = CAMPOS_NUMERICOS - {"quantidade"}
 
 LARGURAS = {
     "CD_UNI_NEG": 13,
+    "TIPO_DOCUMENTO": 18,
     "NF": 13,
     "MODELO_FORMULARIO": 18,
     "CHAVE": 52,
+    "CHAVE_ITEM": 55,
     "DATA_EMISSAO": 20,
     "DATA_ENTRADA": 16,
     "CNPJ_CPF": 20,
@@ -169,11 +175,24 @@ def primeira_base_pis_cofins(registro):
 
     return registro.get("base_cofins", "")
 
+def gerar_chave_item(registro):
+    chave = str(
+        registro.get("chave", "") or ""
+    ).strip()
+    numero_item = str(
+        registro.get("n_item", "") or ""
+    ).strip()
+    if not chave:
+        return ""
+    if not numero_item:
+        numero_item = "1"
+    return f"{chave}_{numero_item}"
 
 def preparar_registro(registro):
     """Acrescenta somente campos derivados de origem conhecida."""
     preparado = dict(registro)
     preparado["base_pis_cofins"] = primeira_base_pis_cofins(registro)
+    preparado["chave_item"] = (gerar_chave_item(registro))
     return preparado
 
 
@@ -207,24 +226,66 @@ def criar_cabecalho(planilha):
     planilha.row_dimensions[1].height = 32
 
 
-def preencher_planilha(planilha, registros):
-    """Grava uma linha para cada item fiscal mapeado."""
-    for linha, registro_original in enumerate(registros, start=2):
-        registro = preparar_registro(registro_original)
+def preencher_planilha(
+    planilha,
+    registros,
+    linha_inicial=2
+):
+    """
+    Grava uma linha para cada registro fiscal.
 
-        for coluna, (_, campo) in enumerate(COLUNAS, start=1):
-            valor = preparar_valor(registro, campo)
-            celula = planilha.cell(row=linha, column=coluna, value=valor)
-            celula.alignment = Alignment(vertical="top")
+    Quando a planilha é nova, a gravação começa na linha 2.
+    Quando a planilha já existe, a gravação começa depois
+    da última linha preenchida.
+    """
+
+    for linha, registro_original in enumerate(
+        registros,
+        start=linha_inicial
+    ):
+        registro = preparar_registro(
+            registro_original
+        )
+
+        for coluna, (_, campo) in enumerate(
+            COLUNAS,
+            start=1
+        ):
+            valor = preparar_valor(
+                registro,
+                campo
+            )
+
+            celula = planilha.cell(
+                row=linha,
+                column=coluna,
+                value=valor
+            )
+
+            celula.alignment = Alignment(
+                vertical="top"
+            )
 
             if campo in CAMPOS_TEXTO:
                 celula.number_format = "@"
-            elif campo == "data_emissao" and isinstance(valor, datetime):
+
+            elif (
+                campo == "data_emissao"
+                and isinstance(valor, datetime)
+            ):
                 celula.number_format = "dd/mm/yyyy"
+
             elif campo == "quantidade":
-                celula.number_format = '#,##0.0000;[Red](#,##0.0000);-'
+                celula.number_format = (
+                    '#,##0.0000;'
+                    '[Red](#,##0.0000);-'
+                )
+
             elif campo in CAMPOS_MONETARIOS:
-                celula.number_format = '#,##0.00;[Red](#,##0.00);-'
+                celula.number_format = (
+                    '#,##0.00;'
+                    '[Red](#,##0.00);-'
+                )
 
 
 def ajustar_colunas(planilha):
@@ -233,36 +294,255 @@ def ajustar_colunas(planilha):
         letra = get_column_letter(coluna)
         planilha.column_dimensions[letra].width = LARGURAS.get(titulo, 16)
 
+def validar_cabecalho(planilha):
+    """
+    Confirma se o cabeçalho da Base_Fiscal.xlsx
+    corresponde ao layout atual definido em COLUNAS.
 
-def gerar_excel(registros, output_dir=OUTPUT_DIR):
+    Evita acrescentar dados em uma planilha com
+    colunas antigas ou em ordem diferente.
     """
-    Gera um novo arquivo Excel por execucao.
-    Os campos exclusivos do CIGAM permanecem vazios quando nao ha
-    origem no XML ou no registro fiscal. O arquivo nao inventa codigos.
+
+    cabecalho_esperado = [
+        titulo
+        for titulo, _ in COLUNAS
+    ]
+
+    cabecalho_encontrado = [
+        planilha.cell(
+            row=1,
+            column=coluna
+        ).value
+        for coluna in range(
+            1,
+            len(COLUNAS) + 1
+        )
+    ]
+
+    if cabecalho_encontrado != cabecalho_esperado:
+        raise ValueError(
+            "O cabeçalho da Base_Fiscal.xlsx "
+            "não corresponde ao layout atual. "
+            "Não foram adicionados novos registros."
+        )
+
+def obter_chaves_itens_existentes(planilha):
+    cabecalhos = {
+        str(
+            planilha.cell(
+                row=1,
+                column=coluna
+            ).value or ""
+        ).strip(): coluna
+        for coluna in range(
+            1,
+            planilha.max_column + 1
+        )
+    }
+
+    coluna_chave_item = cabecalhos.get(
+        "CHAVE_ITEM"
+    )
+
+    if coluna_chave_item is None:
+        raise ValueError(
+            "A coluna CHAVE_ITEM não foi encontrada "
+            "na Base_Fiscal.xlsx."
+        )
+
+    chaves_existentes = set()
+
+    for linha in range(
+        2,
+        planilha.max_row + 1
+    ):
+        valor = planilha.cell(
+            row=linha,
+            column=coluna_chave_item
+        ).value
+
+        chave_item = str(
+            valor or ""
+        ).strip()
+
+        if chave_item:
+            chaves_existentes.add(
+                chave_item
+            )
+    return chaves_existentes
+
+def filtrar_registros_novos(
+    registros,
+    chaves_existentes
+):
     """
+    Mantém somente registros cuja CHAVE_ITEM
+    ainda não exista na Base_Fiscal.xlsx.
+
+    Também impede duplicidade dentro da própria
+    execução atual.
+    """
+
+    registros_novos = []
+
+    chaves_processadas = set(
+        chaves_existentes
+    )
+
+    ignorados = 0
+
+    for registro in registros:
+        registro_preparado = preparar_registro(
+            registro
+        )
+
+        chave_item = registro_preparado.get(
+            "chave_item",
+            ""
+        )
+
+        if not chave_item:
+            ignorados += 1
+            continue
+
+        if chave_item in chaves_processadas:
+            ignorados += 1
+            continue
+
+        registros_novos.append(
+            registro
+        )
+
+        chaves_processadas.add(
+            chave_item
+        )
+    return registros_novos, ignorados
+
+def gerar_excel(registros,output_dir=OUTPUT_DIR):
     if not registros:
-        raise ValueError("Nenhum registro fiscal informado para exportacao.")
+        raise ValueError(
+            "Nenhum registro fiscal informado "
+            "para exportacao."
+        )
 
     pasta_saida = Path(output_dir)
-    pasta_saida.mkdir(parents=True, exist_ok=True)
 
-    agora = datetime.now()
-    nome_arquivo = f"Entradas_XML_{agora.strftime('%Y%m%d_%H%M%S')}.xlsx"
-    caminho_arquivo = pasta_saida / nome_arquivo
+    pasta_saida.mkdir(
+        parents=True,
+        exist_ok=True
+    )
 
-    workbook = Workbook()
-    planilha = workbook.active
-    planilha.title = SHEET_NAME
-    planilha.freeze_panes = "A2"
-    planilha.sheet_view.showGridLines = False
+    caminho_arquivo = (
+        pasta_saida /
+        "Base_Fiscal.xlsx"
+    )
 
-    criar_cabecalho(planilha)
-    preencher_planilha(planilha, registros)
-    ajustar_colunas(planilha)
+    arquivo_ja_existia = (
+        caminho_arquivo.exists()
+    )
 
-    ultima_coluna = get_column_letter(len(COLUNAS))
-    ultima_linha = len(registros) + 1
-    planilha.auto_filter.ref = f"A1:{ultima_coluna}{ultima_linha}"
+    if arquivo_ja_existia:
+        workbook = load_workbook(
+            caminho_arquivo
+        )
 
-    workbook.save(caminho_arquivo)
+        if SHEET_NAME not in workbook.sheetnames:
+            raise ValueError(
+                f"A planilha '{SHEET_NAME}' "
+                "não foi encontrada em "
+                "Base_Fiscal.xlsx."
+            )
+
+        planilha = workbook[SHEET_NAME]
+
+        validar_cabecalho(
+            planilha
+        )
+
+        chaves_existentes = (
+            obter_chaves_itens_existentes(
+                planilha
+            )
+        )
+
+        linha_inicial = (
+            planilha.max_row + 1
+        )
+
+    else:
+        workbook = Workbook()
+
+        planilha = workbook.active
+
+        planilha.title = SHEET_NAME
+
+        planilha.freeze_panes = "A2"
+
+        planilha.sheet_view.showGridLines = False
+
+        criar_cabecalho(
+            planilha
+        )
+
+        chaves_existentes = set()
+
+        linha_inicial = 2
+
+    registros_novos, registros_ignorados = (
+        filtrar_registros_novos(
+            registros,
+            chaves_existentes
+        )
+    )
+
+    if registros_novos:
+        preencher_planilha(
+            planilha,
+            registros_novos,
+            linha_inicial=linha_inicial
+        )
+
+    ajustar_colunas(
+        planilha
+    )
+
+    ultima_coluna = get_column_letter(
+        len(COLUNAS)
+    )
+
+    ultima_linha = max(
+        planilha.max_row,
+        1
+    )
+
+    planilha.auto_filter.ref = (
+        f"A1:"
+        f"{ultima_coluna}"
+        f"{ultima_linha}"
+    )
+
+    workbook.save(
+        caminho_arquivo
+    )
+
+    print(
+        f"Registros recebidos: "
+        f"{len(registros)}"
+    )
+
+    print(
+        f"Registros novos adicionados: "
+        f"{len(registros_novos)}"
+    )
+
+    print(
+        f"Registros duplicados ignorados: "
+        f"{registros_ignorados}"
+    )
+
+    print(
+        f"Total de linhas na base: "
+        f"{planilha.max_row - 1}"
+    )
+
     return caminho_arquivo

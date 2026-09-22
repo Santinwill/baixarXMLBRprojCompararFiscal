@@ -21,6 +21,10 @@ def configurar_filtros(page: Page, modo="documentos"):
     data_consulta = obter_data_anterior()
     page.fill("#FormEmitDe", data_consulta)
     page.fill("#FormEmitAte", data_consulta)
+
+    # page.fill("#FormEmitDe", "14/09/2026")
+    # page.fill("#FormEmitAte", "20/09/2026")
+
     page.fill("#destincnpj", "")
     page.click('a[href="javascript:filtros.submit()"]')
     page.wait_for_load_state("networkidle")

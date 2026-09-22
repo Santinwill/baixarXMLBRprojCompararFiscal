@@ -6,6 +6,7 @@ DOWNLOADS_DIR = Path("downloads")
 DOWNLOADS_DIR.mkdir(parents=True,exist_ok=True)
 
 def selecionar_todos(page: Page):
+    page.wait_for_selector("#TODOS",timeout=30000)
     checkbox_todos = page.locator("#TODOS")
     if checkbox_todos.count() == 0:
         raise Exception("Checkbox TODOS não foi encontrado na página.")

@@ -11,51 +11,33 @@ def remover_namespace(tag):
 def obter_texto(elemento):
     if elemento is None:
         return ""
-
     return (elemento.text or "").strip()
 
 
 def buscar_descendente(elemento, nome_tag):
     if elemento is None:
         return None
-
     for item in elemento.iter():
         if remover_namespace(item.tag) == nome_tag:
             return item
-
     return None
 
 
 def buscar_texto(elemento, nome_tag):
-    return obter_texto(
-        buscar_descendente(
-            elemento,
-            nome_tag
-        )
-    )
+    return obter_texto(buscar_descendente(elemento,nome_tag))
 
 
 def identificar_tipo_documento(root):
-    nome_root = remover_namespace(
-        root.tag
-    ).lower()
-
+    nome_root = remover_namespace(root.tag).lower()
     if nome_root == "nfse":
         return "NFSe"
-
     return "DESCONHECIDO"
 
 
 def obter_chave_nfse(root):
-
-    inf_nfse = buscar_descendente(
-        root,
-        "infNFSe"
-    )
-
+    inf_nfse = buscar_descendente(root,"infNFSe")
     if inf_nfse is None:
         return ""
-
     identificador = (
         inf_nfse.attrib.get(
             "Id",
@@ -71,13 +53,9 @@ def obter_chave_nfse(root):
 
 
 def processar_nfse(caminho_xml):
-
     caminho_xml = Path(caminho_xml)
-
     tree = ET.parse(caminho_xml)
-
     root = tree.getroot()
-
     if identificar_tipo_documento(root) != "NFSe":
         raise ValueError(
             f"{caminho_xml.name} não é NFSe"
@@ -233,42 +211,21 @@ def processar_nfse(caminho_xml):
                 "xInfComp"
             ),
     }
-
     return documento
 
 
 def processar_pasta_nfses(xml_dir):
-
     resultados = []
-
     pasta = Path(xml_dir)
-
     if not pasta.exists():
         return resultados
-
-    for arquivo_xml in sorted(
-        pasta.glob("*.xml")
-    ):
-
+    for arquivo_xml in sorted(pasta.glob("*.xml")):
         try:
-
-            tree = ET.parse(
-                arquivo_xml
-            )
-
+            tree = ET.parse(arquivo_xml)
             root = tree.getroot()
-
-            if (
-                identificar_tipo_documento(root)
-                != "NFSe"
-            ):
+            if (identificar_tipo_documento(root)!= "NFSe"):
                 continue
-
-            resultados.append(
-                processar_nfse(
-                    arquivo_xml
-                )
-            )
+            resultados.append(processar_nfse(arquivo_xml))
 
         except ET.ParseError:
             continue
@@ -279,27 +236,12 @@ def processar_pasta_nfses(xml_dir):
                 f"{arquivo_xml.name}: "
                 f"{erro}"
             )
-
     return resultados
 
 
 if __name__ == "__main__":
-
-    documentos = processar_pasta_nfses(
-        "xmls"
-    )
-
-    print(
-        f"NFSe encontradas: "
-        f"{len(documentos)}"
-    )
-
+    documentos = processar_pasta_nfses("xmls")
+    print(f"NFSe encontradas: {len(documentos)}")
     if documentos:
-
-        print(
-            "\nPrimeira NFSe:"
-        )
-
-        print(
-            documentos[0]
-        )
+        print("\nPrimeira NFSe:")
+        print(documentos[0])

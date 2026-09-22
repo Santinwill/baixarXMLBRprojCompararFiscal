@@ -2,7 +2,7 @@ from playwright.sync_api import sync_playwright
 from modules.config import (USUARIO,SENHA,validar_config)
 from modules.login import fazer_login
 from modules.filtros import configurar_filtros
-from modules.pagination import (obter_total_paginas,ir_para_proxima_pagina)
+from modules.pagination import (obter_total_paginas,ir_para_pagina)
 from modules.download import (selecionar_todos,exportar_selecao)
 from modules.extractor import processar_arquivo
 from modules.logger import logger
@@ -14,10 +14,9 @@ from modules.fiscal_mapper import mapear_documentos
 from modules.excel_exporter import gerar_excel
 from datetime import datetime
 
-
 def processar_consulta(page, stats):
     pagina_atual, total_paginas = obter_total_paginas(page)
-    while pagina_atual <= total_paginas:
+    for pagina_atual in range(1, total_paginas + 1):
         mensagem = (f"Processando página {pagina_atual} de {total_paginas}")
         print(mensagem)
         print(page.title())
@@ -27,11 +26,11 @@ def processar_consulta(page, stats):
         resultado = processar_arquivo(arquivo_salvo)
         stats.xmls_novos += resultado["novos"]
         stats.xmls_duplicados += resultado["duplicados"]
+        stats.paginas_processadas += 1
+        stats.downloads_realizados += 1
         if pagina_atual < total_paginas:
-            ir_para_proxima_pagina(page)
-            pagina_atual, total_paginas = (obter_total_paginas(page))
-        else:
-            break
+            proxima_pagina = pagina_atual + 1
+            ir_para_pagina(page,proxima_pagina)           
 
 def main():
     stats = Statistics()
@@ -46,6 +45,7 @@ def main():
                 browser = p.chromium.launch(headless=True)
                 page = browser.new_page(accept_downloads=True)
                 fazer_login(page,USUARIO,SENHA)
+                page.wait_for_timeout(5000)
                 logger.info("Login realizado com sucesso")
                 print("Processando NFe e CTe")
                 configurar_filtros(page,"documentos")

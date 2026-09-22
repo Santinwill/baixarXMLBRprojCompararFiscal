@@ -34,3 +34,5 @@ database/
 # Sistema operacional
 .DS_Store
 Thumbs
+
+*.bat
